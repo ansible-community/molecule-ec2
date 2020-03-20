@@ -19,6 +19,7 @@
 #  DEALINGS IN THE SOFTWARE.
 
 from base64 import b64decode
+import os
 import sys
 
 try:
