@@ -6,18 +6,18 @@ Molecule EC2 Plugin
    :target: https://badge.fury.io/py/molecule-ec2
    :alt: PyPI Package
 
-.. image:: https://img.shields.io/travis/com/pycontribs/molecule-ec2/master.svg?label=Linux%20builds%20%40%20Travis%20CI
-   :target: https://travis-ci.com/pycontribs/molecule-ec2
+.. image:: https://zuul-ci.org/gated.svg
+   :target: https://dashboard.zuul.ansible.com/t/ansible/builds?project=ansible-community/molecule-ec2
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/python/black
    :alt: Python Black Code Style
 
-.. image:: https://img.shields.io/badge/Code%20of%20Conduct-Ansible-silver.svg
+.. image:: https://img.shields.io/badge/Code%20of%20Conduct-silver.svg
    :target: https://docs.ansible.com/ansible/latest/community/code_of_conduct.html
    :alt: Ansible Code of Conduct
 
-.. image:: https://img.shields.io/badge/Mailing%20lists-Ansible-orange.svg
+.. image:: https://img.shields.io/badge/Mailing%20lists-silver.svg
    :target: https://docs.ansible.com/ansible/latest/community/communication.html#mailing-list-information
    :alt: Ansible mailing lists
 

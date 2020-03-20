@@ -1,6 +1,6 @@
-*******
+*********************************************
 Amazon Web Services driver installation guide
-*******
+*********************************************
 
 Requirements
 ============
@@ -19,4 +19,4 @@ widely recommended `'--user' flag`_ when invoking ``pip``.
 
 .. code-block:: bash
 
-    $ pip install 'molecule[ec2]'
+    $ pip install 'molecule-ec2'
