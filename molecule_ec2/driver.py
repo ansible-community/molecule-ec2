@@ -257,6 +257,4 @@ class EC2(Driver):
         """ Return path to its own cookiecutterm templates. It is used by init
         command in order to figure out where to load the templates from.
         """
-        return os.path.join(
-            os.path.dirname(__file__), "cookiecutter/scenario/driver/ec2"
-        )
+        return os.path.join(os.path.dirname(__file__), "cookiecutter")
