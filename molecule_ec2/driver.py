@@ -247,7 +247,7 @@ class EC2(Driver):
         decoded = b64decode(data_response["PasswordData"])
         with open(key_file, "rb") as f:
             key = load_pem_private_key(f.read(), None, default_backend())
-        return key.decrypt(decoded, PKCS1v15()).decode('utf-8')
+        return key.decrypt(decoded, PKCS1v15()).decode("utf-8")
 
     def sanity_checks(self):
         # FIXME(decentral1se): Implement sanity checks
