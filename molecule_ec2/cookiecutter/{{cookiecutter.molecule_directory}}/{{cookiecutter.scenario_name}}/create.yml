@@ -30,10 +30,10 @@
     keypair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
   tasks:
     - name: Find the vpc for the subnet
-      ec2_vpc_subnet_facts:
+      ec2_vpc_subnet_info:
         subnet_ids: "{{ item.vpc_subnet_id }}"
       loop: "{{ molecule_yml.platforms }}"
-      register: subnet_facts
+      register: subnet_info
 
     - name: Create security groups
       ec2_group:
@@ -42,7 +42,7 @@
         description: "{{ security_group_name }}"
         rules: "{{ security_group_rules }}"
         rules_egress: "{{ security_group_rules_egress }}"
-      loop: "{{ subnet_facts.results }}"
+      loop: "{{ subnet_info.results }}"
 
     - name: Test for presence of local keypair
       stat:
@@ -68,20 +68,20 @@
       when: keypair.changed
 
     - name: Get the ec2 ami(s) by owner and name, if image not set
-      ec2_ami_facts:
+      ec2_ami_info:
         owners: "{{ item.image_owner }}"
         filters:
           name: "{{ item.image_name }}"
       loop: "{{ molecule_yml.platforms }}"
       when: item.image is not defined
-      register: ami_facts
+      register: ami_info
 
     - name: Create molecule instance(s)
       ec2:
         key_name: "{{ keypair_name }}"
         image: "{{ item.image
           if item.image is defined
-          else (ami_facts.results[index].images | sort(attribute='creation_date', reverse=True))[0].image_id }}"
+          else (ami_info.results[index].images | sort(attribute='creation_date', reverse=True))[0].image_id }}"
         instance_type: "{{ item.instance_type }}"
         vpc_subnet_id: "{{ item.vpc_subnet_id }}"
         group: "{{ security_group_name }}"
