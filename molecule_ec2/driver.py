@@ -74,6 +74,7 @@ class EC2(Driver):
             image: ami-0311dc90a352b25f4
             instance_type: t2.micro
             vpc_subnet_id: subnet-1cb17175
+            region: us-east-1
 
     If you don't know the AMI code or want to avoid hardcoding it:
 
@@ -87,6 +88,7 @@ class EC2(Driver):
             image_name: ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-20190320
             instance_type: t2.micro
             vpc_subnet_id: subnet-1cb17175
+            region: us-east-1
 
     Use wildcards for getting the latest image. For example, the latest Ubuntu bionic image:
 
@@ -100,6 +102,7 @@ class EC2(Driver):
             image_name: ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*
             instance_type: t2.micro
             vpc_subnet_id: subnet-1cb17175
+            region: us-east-1
 
     Windows EC2 instances can be used as well:
 
