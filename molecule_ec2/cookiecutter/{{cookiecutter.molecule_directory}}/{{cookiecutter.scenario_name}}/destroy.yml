@@ -21,9 +21,7 @@
       ec2:
         state: absent
         instance_ids: "{{ item.instance_ids }}"
-       region: "{{ item.region 
-          if item.region is defined 
-          else omit }}"
+       region: "{{ item.region if item.region is defined else omit }}"
       register: server
       with_items: "{{ instance_conf }}"
       when: not skip_instances

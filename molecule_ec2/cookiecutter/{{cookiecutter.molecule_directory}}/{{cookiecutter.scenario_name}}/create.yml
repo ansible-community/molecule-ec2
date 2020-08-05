@@ -85,8 +85,8 @@
         instance_type: "{{ item.instance_type }}"
         vpc_subnet_id: "{{ item.vpc_subnet_id }}"
         group: "{{ security_group_name }}"
-        region: "{{ item.region 
-          if item.region is defined 
+        region: "{{ item.region
+          if item.region is defined
           else omit }}"
         instance_tags: "{{ item.instance_tags | combine({'instance': item.name})
           if item.instance_tags is defined
