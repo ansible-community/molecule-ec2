@@ -31,7 +31,7 @@
   tasks:
     - name: Find the vpc for the subnet
       ec2_vpc_subnet_info:
-        subnet_ids: "{{ item.vpc_subnet_id }}"
+        subnet_ids: "{{ item.vpc_subnet_id | default(omit) }}"
       loop: "{{ molecule_yml.platforms }}"
       register: subnet_info
 
@@ -83,7 +83,7 @@
           if item.image is defined
           else (ami_info.results[index].images | sort(attribute='creation_date', reverse=True))[0].image_id }}"
         instance_type: "{{ item.instance_type }}"
-        vpc_subnet_id: "{{ item.vpc_subnet_id }}"
+        vpc_subnet_id: "{{ item.vpc_subnet_id | default(subnet_info.results[index].subnets[0].subnet_id) }}"
         group: "{{ security_group_name }}"
         instance_tags: "{{ item.instance_tags | combine({'instance': item.name})
           if item.instance_tags is defined
