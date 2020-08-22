@@ -1,0 +1,18 @@
+---
+dependency:
+  name: {{ cookiecutter.dependency_name }}
+
+driver:
+  name: ec2
+
+provisioner:
+  name: {{ cookiecutter.provisioner_name }}
+
+verifier:
+  name: {{ cookiecutter.verifier_name }}
+
+platforms:
+  - name: ubuntu2004
+    instance_type: t3.micro
+    image_owner: 099720109477  # Canonical
+    image_name: ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*

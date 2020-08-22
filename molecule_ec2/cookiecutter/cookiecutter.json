@@ -1,5 +1,8 @@
 {
     "molecule_directory": "molecule",
     "role_name": "OVERRIDDEN",
-    "scenario_name": "OVERRIDDEN"
+    "scenario_name": "OVERRIDDEN",
+    "dependency_name": "OVERRIDDEN",
+    "provisioner_name": "OVERRIDDEN",
+    "verifier_name": "OVERRIDDEN"
 }
