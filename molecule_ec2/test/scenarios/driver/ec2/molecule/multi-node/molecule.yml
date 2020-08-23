@@ -3,10 +3,10 @@ dependency:
   name: galaxy
 driver:
   name: ec2
-lint:
-  name: yamllint
-  options:
-    config-file: ../../../resources/.yamllint
+lint: |
+  set -e
+  yamllint -c ../../../resources/.yamllint .
+  ansible-lint
 platforms:
   - name: instance-1
     image: ami-a5b196c0
