@@ -1,35 +1,223 @@
 ---
 # zuul.d/layout.yaml
+
+# generic jobs re-used by molecule plugins, operating system include because
+# it may be critical part of the test matrix.
+- job:
+    name: molecule-tox-devel-centos-8
+    parent: molecule-tox-py36
+    vars:
+      tox_envlist: devel
+    attempts: 1
+    irrelevant-files: &doc-files
+      - ^docs/
+      - .*\.rst$
+
+- job:
+    name: molecule-tox-py27-centos-7
+    description: "[DEPRECATED] Please remove it from your project"
+    parent: molecule-tox-py27
+    voting: false
+    attempts: 1
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py36-centos-8
+    parent: molecule-tox-py36
+    attempts: 1
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py36-ubuntu-bionic
+    parent: molecule-tox-py36
+    nodeset: ubuntu-bionic-1vcpu
+    attempts: 1
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py37-fedora-30
+    parent: molecule-tox-py37
+    attempts: 1
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-packaging
+    description: Runs tests related to packaging
+    parent: ansible-tox-molecule
+    # see: https://github.com/ansible-community/molecule/issues/2723
+    nodeset: ubuntu-bionic-1vcpu
+    timeout: 3600
+    vars:
+      tox_envlist: packaging
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-snap
+    description: Runs tests related to building a snap
+    parent: ansible-tox-molecule
+    pre-run: playbooks/snap-pre-run.yaml
+    nodeset: ubuntu-bionic-1vcpu
+    vars:
+      tox_envlist: snap
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py36-ansible210-unit
+    parent: molecule-tox-py36
+    # see: https://github.com/ansible-community/molecule/issues/2723
+    nodeset: ubuntu-bionic-1vcpu
+    vars:
+      tox_envlist: py36-ansible210-unit
+      tox_environment:
+        PYTEST_REQPASS: 489
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py36-ansible210-functional
+    parent: molecule-tox-py36
+    # see: https://github.com/ansible-community/molecule/issues/2723
+    nodeset: ubuntu-bionic-1vcpu
+    timeout: 9000
+    vars:
+      tox_envlist: py36-ansible210-functional
+      tox_environment:
+        PYTEST_REQPASS: 37
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py36-ansible29-unit
+    parent: molecule-tox-py36
+    vars:
+      tox_envlist: py36-ansible29-unit
+      tox_environment:
+        PYTEST_REQPASS: 489
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py36-ansible29-functional
+    parent: molecule-tox-py36
+    timeout: 9000
+    vars:
+      tox_envlist: py36-ansible29-functional
+      tox_environment:
+        PYTEST_REQPASS: 37
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py37-ansible210-unit
+    parent: molecule-tox-py37
+    vars:
+      tox_envlist: py37-ansible210-unit
+      tox_environment:
+        PYTEST_REQPASS: 489
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py37-ansible210-functional
+    parent: molecule-tox-py37
+    timeout: 9000
+    vars:
+      tox_envlist: py37-ansible210-functional
+      tox_environment:
+        PYTEST_REQPASS: 37
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py37-ansible29-unit
+    parent: molecule-tox-py37
+    # see: https://github.com/ansible-community/molecule/issues/2723
+    nodeset: ubuntu-bionic-1vcpu
+    vars:
+      tox_envlist: py37-ansible29-unit
+      tox_environment:
+        PYTEST_REQPASS: 489
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py37-ansible29-functional
+    parent: molecule-tox-py37
+    timeout: 9000
+    # see: https://github.com/ansible-community/molecule/issues/2723
+    nodeset: ubuntu-bionic-1vcpu
+    vars:
+      tox_envlist: py37-ansible29-functional
+      tox_environment:
+        PYTEST_REQPASS: 37
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py36-ansibledevel-unit
+    parent: molecule-tox-py36
+    # see: https://github.com/ansible-community/molecule/issues/2723
+    nodeset: ubuntu-bionic-1vcpu
+    # until ansible-devel 2.10 changes are implemented
+    voting: false
+    vars:
+      tox_envlist: py36-ansibledevel-unit
+      tox_environment:
+        PYTEST_REQPASS: 489
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py36-ansibledevel-functional
+    parent: molecule-tox-py36
+    timeout: 9000
+    # see: https://github.com/ansible-community/molecule/issues/2723
+    nodeset: ubuntu-bionic-1vcpu
+    voting: false
+    vars:
+      tox_envlist: py36-ansibledevel-functional
+      tox_environment:
+        PYTEST_REQPASS: 37
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py37-ansible210-unit
+    parent: molecule-tox-py37
+    # see: https://github.com/ansible-community/molecule/issues/2723
+    nodeset: ubuntu-bionic-1vcpu
+    vars:
+      tox_envlist: py37-ansible210-unit
+      tox_environment:
+        PYTEST_REQPASS: 489
+    irrelevant-files: *doc-files
+
+- job:
+    name: molecule-tox-py37-ansible210-functional
+    parent: molecule-tox-py37
+    timeout: 9000
+    # see: https://github.com/ansible-community/molecule/issues/2723
+    nodeset: ubuntu-bionic-1vcpu
+    vars:
+      tox_envlist: py37-ansible210-functional
+      tox_environment:
+        PYTEST_REQPASS: 37
+    irrelevant-files: *doc-files
+
 - project:
     templates:
       - publish-to-pypi
     check:
-      jobs: &defaults
+      jobs: &jobs
+        - molecule-tox-docs:
+            vars:
+              # zuul expects a 'html' folder under this
+              sphinx_build_dir: docs/docstree
         - molecule-tox-linters:
             vars:
               tox_envlist: lint
         - molecule-tox-packaging:
             vars:
-              tox_envlist: packaging
-        - molecule-tox-py27-centos-7:
-            vars:
-              tox_environment:
-                PYTEST_REQPASS: 1
-        - molecule-tox-py36-centos-8:
-            vars:
-              tox_environment:
-                PYTEST_REQPASS: 1
-        - molecule-tox-py36-ubuntu-bionic:
-            vars:
-              tox_environment:
-                PYTEST_REQPASS: 1
-        - molecule-tox-py37-fedora-30:
-            vars:
-              tox_environment:
-                PYTEST_REQPASS: 1
-        - molecule-tox-devel-centos-8:
-            vars:
-              tox_environment:
-                PYTEST_REQPASS: 1
+              tox_envlist: packaging,dockerfile,build-containers
+        - molecule-tox-py36-ansible210-functional
+        - molecule-tox-py36-ansible210-unit
+        - molecule-tox-py36-ansible29-functional
+        - molecule-tox-py36-ansible29-unit
+        - molecule-tox-py36-ansibledevel-functional
+        - molecule-tox-py36-ansibledevel-unit
+        - molecule-tox-py37-ansible210-functional
+        - molecule-tox-py37-ansible210-unit
+        - molecule-tox-py37-ansible29-functional
+        - molecule-tox-py37-ansible29-unit
     gate:
-      jobs: *defaults
+      jobs: *jobs
