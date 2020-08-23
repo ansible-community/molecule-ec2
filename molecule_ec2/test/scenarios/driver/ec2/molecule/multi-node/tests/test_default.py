@@ -7,9 +7,8 @@ testinfra_hosts = testinfra.utils.ansible_runner.AnsibleRunner(
 ).get_hosts("all")
 
 
-# EC2 provides unique random hostnames.
-def test_hostname(host):
-    pass
+# EC2 provides unique random hostnames
+# So parent molecule hostname based tests don't work so well
 
 
 def test_etc_molecule_directory(host):
@@ -19,13 +18,3 @@ def test_etc_molecule_directory(host):
     assert f.user == "root"
     assert f.group == "root"
     assert f.mode == 0o755
-
-
-def test_etc_molecule_ansible_hostname_file(host):
-    filename = "/etc/molecule/{}".format(host.check_output("hostname -s"))
-    f = host.file(filename)
-
-    assert f.is_file
-    assert f.user == "root"
-    assert f.group == "root"
-    assert f.mode == 0o644
