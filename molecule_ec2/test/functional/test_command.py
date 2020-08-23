@@ -22,13 +22,28 @@ import os
 
 import pytest
 import sh
+import functools
 
-from molecule.scenario import ephemeral_directory
+from molecule import logger, util
+from molecule.test.conftest import change_dir_to
+
+LOG = logger.get_logger(__name__)
 
 
 @pytest.fixture
-def scenario_to_test(request):
-    return request.param
+def with_scenario(scenario_name):
+    scenario_directory = os.path.join(
+        os.path.dirname(util.abs_path(__file__)), os.path.pardir, "scenarios/driver/ec2"
+    )
+
+    with change_dir_to(scenario_directory):
+        yield
+        if scenario_name:
+            msg = "CLEANUP: Destroying instances for all scenario(s)"
+            LOG.out(msg)
+            options = {"driver_name": "ec2", "all": True}
+            cmd = sh.molecule.bake("destroy", **options)
+            pytest.helpers.run_command(cmd)
 
 
 @pytest.fixture
@@ -40,310 +55,122 @@ def scenario_name(request):
 
 
 @pytest.fixture
-def driver_name(request):
-    return request.param
+def driver_name():
+    return "ec2"
 
 
-@pytest.mark.extensive
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("driver/docker", "docker", "default"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_check(scenario_to_test, with_scenario, scenario_name):
+def std_parametrize(func):
+    # Bundle up parametrize to avoid repetition
+    @pytest.mark.extensive
+    @pytest.mark.parametrize(
+        "scenario_name", [("default"), ("multi-node")], indirect=["scenario_name"]
+    )
+    @functools.wraps(func)
+    def wrapped(*args, **kwargs):
+        return func(*args, **kwargs)
+
+    return wrapped
+
+
+@std_parametrize
+def test_command_check(with_scenario, scenario_name):
     options = {"scenario_name": scenario_name}
     cmd = sh.molecule.bake("check", **options)
     pytest.helpers.run_command(cmd)
 
 
-@pytest.mark.extensive
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("driver/docker", "docker", "default"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_cleanup(scenario_to_test, with_scenario, scenario_name):
+@std_parametrize
+def test_command_cleanup(with_scenario, scenario_name):
     options = {"scenario_name": scenario_name}
     cmd = sh.molecule.bake("cleanup", **options)
     pytest.helpers.run_command(cmd)
 
 
-@pytest.mark.extensive
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("driver/docker", "docker", "default"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_converge(scenario_to_test, with_scenario, scenario_name):
+@std_parametrize
+def test_command_converge(with_scenario, scenario_name):
     options = {"scenario_name": scenario_name}
     cmd = sh.molecule.bake("converge", **options)
     pytest.helpers.run_command(cmd)
 
 
-@pytest.mark.extensive
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("driver/docker", "docker", "default"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_create(scenario_to_test, with_scenario, scenario_name):
+@std_parametrize
+def test_command_create(with_scenario, scenario_name):
     options = {"scenario_name": scenario_name}
     cmd = sh.molecule.bake("create", **options)
     pytest.helpers.run_command(cmd)
 
 
-@pytest.mark.skip(
-    reason="Disabled due to https://github.com/ansible/galaxy/issues/2030"
-)
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("dependency", "docker", "ansible-galaxy"),
-        ("dependency", "podman", "ansible-galaxy"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_dependency_ansible_galaxy(
-    request, scenario_to_test, with_scenario, scenario_name
-):
-    options = {"scenario_name": scenario_name}
-    cmd = sh.molecule.bake("dependency", **options)
-    pytest.helpers.run_command(cmd)
-
-    dependency_role = os.path.join(
-        ephemeral_directory("molecule"),
-        "dependency",
-        "ansible-galaxy",
-        "roles",
-        "timezone",
-    )
-    assert os.path.isdir(dependency_role)
-
-
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [("dependency", "docker", "gilt"), ("dependency", "podman", "gilt")],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_dependency_gilt(
-    request, scenario_to_test, with_scenario, scenario_name
-):
-    options = {"scenario_name": scenario_name}
-    cmd = sh.molecule.bake("dependency", **options)
-    pytest.helpers.run_command(cmd)
-
-    dependency_role = os.path.join(
-        ephemeral_directory("molecule"), "dependency", "gilt", "roles", "timezone"
-    )
-    assert os.path.isdir(dependency_role)
-
-
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [("dependency", "docker", "shell"), ("dependency", "podman", "shell")],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_dependency_shell(
-    request, scenario_to_test, with_scenario, scenario_name
-):
-    options = {"scenario_name": scenario_name}
-    cmd = sh.molecule.bake("dependency", **options)
-    pytest.helpers.run_command(cmd)
-
-    dependency_role = os.path.join(
-        ephemeral_directory("molecule"), "dependency", "shell", "roles", "timezone"
-    )
-    assert os.path.isdir(dependency_role)
-
-
-@pytest.mark.extensive
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("driver/docker", "docker", "default"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_destroy(scenario_to_test, with_scenario, scenario_name):
+@std_parametrize
+def test_command_destroy(with_scenario, scenario_name):
     options = {"scenario_name": scenario_name}
     cmd = sh.molecule.bake("destroy", **options)
     pytest.helpers.run_command(cmd)
 
 
-@pytest.mark.extensive
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("driver/docker", "docker", "default"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_idempotence(scenario_to_test, with_scenario, scenario_name):
+@std_parametrize
+def test_command_idempotence(with_scenario, scenario_name):
     pytest.helpers.idempotence(scenario_name)
 
 
-@pytest.mark.parametrize(
-    "driver_name", [("docker"), ("podman")], indirect=["driver_name"]
-)
-def test_command_init_role(temp_dir, driver_name, skip_test):
-    pytest.helpers.init_role(temp_dir, driver_name)
+def test_command_init_role(temp_dir):
+    pytest.helpers.init_role(temp_dir, "ec2")
 
 
-@pytest.mark.parametrize(
-    "driver_name", [("docker"), ("podman")], indirect=["driver_name"]
-)
-def test_command_init_scenario(temp_dir, driver_name, skip_test):
-    pytest.helpers.init_scenario(temp_dir, driver_name)
+@pytest.mark.xfail(reason="https://github.com/ansible-community/molecule/issues/2797")
+def test_command_init_scenario(temp_dir):
+    pytest.helpers.init_scenario(temp_dir, "ec2")
 
 
-@pytest.mark.extensive
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("driver/docker", "docker", "default"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_lint(scenario_to_test, with_scenario, scenario_name):
+@std_parametrize
+def test_command_lint(with_scenario, scenario_name):
     options = {"scenario_name": scenario_name}
     cmd = sh.molecule.bake("lint", **options)
     pytest.helpers.run_command(cmd)
 
 
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, expected",
-    [
-        (
-            "driver/docker",
-            "docker",
-            """
+def test_command_list(with_scenario):
+    expected = """
 Instance Name    Driver Name    Provisioner Name    Scenario Name    Created    Converged
+---------------  -------------  ------------------  ---------------  ---------  -----------
+instance         ec2            ansible             default          false      false
+instance-1       ec2            ansible             multi-node       false      false
+instance-2       ec2            ansible             multi-node       false      false
+""".strip()
 
----------------  -------------  ------------------  ---------------  ---------  -----------
-instance         docker         ansible             default
-instance-1       docker         ansible             multi-node
-instance-2       docker         ansible             multi-node
-""".strip(),
-        ),  # noqa
-        (
-            "driver/delegated",
-            "delegated",
-            """
-Instance Name    Driver Name    Provisioner Name    Scenario Name    Created    Converged
----------------  -------------  ------------------  ---------------  ---------  -----------
-instance         delegated      ansible             default
-""".strip(),
-        ),  # noqa
-        (
-            "driver/podman",
-            "podman",
-            """
-Instance Name    Driver Name    Provisioner Name    Scenario Name    Created    Converged
----------------  -------------  ------------------  ---------------  ---------  -----------
-instance         podman         ansible             default
-instance-1       podman         ansible             multi-node
-instance-2       podman         ansible             multi-node
-""".strip(),
-        ),  # noqa
-    ],
-    indirect=["scenario_to_test", "driver_name"],
-)
-def test_command_list(scenario_to_test, with_scenario, expected):
     pytest.helpers.list(expected)
 
 
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, expected",
-    [
-        (
-            "driver/docker",
-            "docker",
-            """
-instance    docker  ansible  default
-instance-1  docker  ansible  multi-node
-instance-2  docker  ansible  multi-node
-""".strip(),
-        ),
-        (
-            "driver/delegated",
-            "delegated",
-            """
-instance  delegated  ansible  default
-""".strip(),
-        ),
-        (
-            "driver/podman",
-            "podman",
-            """
-instance    podman  ansible  default
-instance-1  podman  ansible  multi-node
-instance-2  podman  ansible  multi-node
-""".strip(),
-        ),
-    ],
-    indirect=["scenario_to_test", "driver_name"],
-)
-def test_command_list_with_format_plain(scenario_to_test, with_scenario, expected):
+def test_command_list_with_format_plain(with_scenario):
+    expected = """
+instance    ec2  ansible  default     false  false
+instance-1  ec2  ansible  multi-node  false  false
+instance-2  ec2  ansible  multi-node  false  false
+""".strip()
     pytest.helpers.list_with_format_plain(expected)
-
-
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, login_args, scenario_name",
-    [
-        ("driver/docker", "docker", [["instance", ".*instance.*"]], "default"),
-        (
-            "driver/docker",
-            "docker",
-            [["instance-1", ".*instance-1.*"], ["instance-2", ".*instance-2.*"]],
-            "multi-node",
-        ),
-        ("driver/delegated", "delegated", [["instance", ".*instance.*"]], "default",),
-        (
-            "driver/podman",
-            "podman",
-            [["instance-1", ".*instance-1.*"], ["instance-2", ".*instance-2.*"]],
-            "multi-node",
-        ),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_login(scenario_to_test, with_scenario, login_args, scenario_name):
-    pytest.helpers.login(login_args, scenario_name)
 
 
 @pytest.mark.extensive
 @pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
+    "scenario_name, login_args",
     [
-        ("driver/docker", "docker", "default"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
+        # login_args: instance, regex
+        ("default", [["instance", ".*Welcome to Ubuntu 16.04.*"]]),
+        (
+            "multi-node",
+            [
+                ["instance-1", ".*Welcome to Ubuntu 16.04.*"],
+                ["instance-2", ".*Welcome to Ubuntu 16.04.*"],
+            ],
+        ),
     ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
+    indirect=["scenario_name"],
 )
-def test_command_prepare(scenario_to_test, with_scenario, scenario_name):
+def test_command_login(with_scenario, scenario_name, login_args):
+    pytest.helpers.login(login_args, scenario_name)
+
+
+@std_parametrize
+def test_command_prepare(with_scenario, scenario_name):
     options = {"scenario_name": scenario_name}
 
     cmd = sh.molecule.bake("create", **options)
@@ -353,61 +180,25 @@ def test_command_prepare(scenario_to_test, with_scenario, scenario_name):
     pytest.helpers.run_command(cmd)
 
 
-@pytest.mark.extensive
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("driver/docker", "docker", "default"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_side_effect(scenario_to_test, with_scenario, scenario_name):
+@std_parametrize
+def test_command_side_effect(with_scenario, scenario_name):
     options = {"scenario_name": scenario_name}
     cmd = sh.molecule.bake("side-effect", **options)
     pytest.helpers.run_command(cmd)
 
 
-@pytest.mark.extensive
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("driver/docker", "docker", "default"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_syntax(scenario_to_test, with_scenario, scenario_name):
+@std_parametrize
+def test_command_syntax(with_scenario, scenario_name):
     options = {"scenario_name": scenario_name}
     cmd = sh.molecule.bake("syntax", **options)
     pytest.helpers.run_command(cmd)
 
 
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("driver/docker", "docker", "default"),
-        ("driver/docker", "docker", "multi-node"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_test(scenario_to_test, with_scenario, scenario_name, driver_name):
+@std_parametrize
+def test_command_test(with_scenario, scenario_name):
     pytest.helpers.test(driver_name, scenario_name)
 
 
-@pytest.mark.extensive
-@pytest.mark.parametrize(
-    "scenario_to_test, driver_name, scenario_name",
-    [
-        ("driver/docker", "docker", "default"),
-        ("driver/delegated", "delegated", "default"),
-        ("driver/podman", "podman", "default"),
-    ],
-    indirect=["scenario_to_test", "driver_name", "scenario_name"],
-)
-def test_command_verify(scenario_to_test, with_scenario, scenario_name):
+@std_parametrize
+def test_command_verify(with_scenario, scenario_name):
     pytest.helpers.verify(scenario_name)

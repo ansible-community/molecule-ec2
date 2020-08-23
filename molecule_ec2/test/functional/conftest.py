@@ -21,3 +21,4 @@
 
 
 from molecule.test.conftest import *  # noqa
+from molecule.test.functional.conftest import *  # noqa
