@@ -21,23 +21,14 @@
       ec2_instance:
         state: absent
         instance_ids: "{{ item.instance_ids }}"
-       region: "{{ item.region if item.region is defined else omit }}"
+        region: "{{ item.region if item.region is defined else omit }}"
+        wait: true
+        wait_timeout: 300
       register: server
       with_items: "{{ instance_conf }}"
       when: not skip_instances
-      async: 7200
-      poll: 3
-
-    - name: Wait for instance(s) deletion to complete
-      async_status:
-        jid: "{{ item.ansible_job_id }}"
-      register: ec2_jobs
-      until: ec2_jobs.finished
-      retries: 300
-      with_items: "{{ server.results }}"
 
     # Mandatory configuration for Molecule to function.
-
     - name: Populate instance config
       set_fact:
         instance_conf: {}

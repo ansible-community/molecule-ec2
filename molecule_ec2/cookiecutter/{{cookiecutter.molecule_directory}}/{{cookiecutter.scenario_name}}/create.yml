@@ -73,7 +73,7 @@
         filters:
           name: "{{ item.image_name }}"
       loop: "{{ molecule_yml.platforms }}"
-      when: item.image is not defined
+      when: item.image_id is not defined
       register: ami_info
 
     - name: Create molecule instance(s)
@@ -103,8 +103,6 @@
       loop: "{{ molecule_yml.platforms }}"
       loop_control:
         index_var: index
-      async: 7200
-      poll: 3
 
     # Mandatory configuration for Molecule to function.
     - name: Populate instance config dict
@@ -117,7 +115,7 @@
           'identity_file': "{{ keypair_path }}",
           'instance_ids': "{{ item.instance_ids }}",
           'region': "{{ item.instances[0].region if item.instances[0].region is defined else omit }}", }
-      with_items: "{{ ec2_jobs.results }}"
+      with_items: "{{ server.results }}"
       register: instance_config_dict
       when: server.changed | bool
 
@@ -140,8 +138,4 @@
         delay: 10
         timeout: 320
       with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
-
-    - name: Wait for boot process to finish
-      pause:
-        minutes: 2
 {%- endraw %}
