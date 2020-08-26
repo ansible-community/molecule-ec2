@@ -27,6 +27,40 @@
 
     keypair_name: molecule_key
     keypair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
+
+  handlers:
+    - name: Persist the keypair
+      copy:
+        dest: "{{ keypair_path }}"
+        content: "{{ keypair.key.private_key }}"
+        mode: 0600
+
+    # Mandatory configuration for Molecule to function.
+    - name: Populate instance config dict
+      set_fact:
+        instance_conf_dict: {
+          'instance': "{{ item.instances[0].tags.instance }}",
+          'address': "{{ item.instances[0].public_ip }}",
+          'user': "{{ ssh_user }}",
+          'port': "{{ ssh_port }}",
+          'identity_file': "{{ keypair_path }}",
+          'instance_ids': "{{ item.instance_ids }}",
+          'region': "{{ item.instances[0].region if item.instances[0].region is defined else omit }}", }
+      with_items: "{{ ec2_jobs.results }}"
+      register: instance_config_dict
+      listen: creation
+
+    - name: Convert instance config dict to a list
+      set_fact:
+        instance_conf: "{{ instance_config_dict.results | map(attribute='ansible_facts.instance_conf_dict') | list }}"
+      listen: creation
+
+    - name: Dump instance config
+      copy:
+        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
+        dest: "{{ molecule_instance_config }}"
+      listen: creation
+
   tasks:
     - name: Find the vpc for the subnet
       ec2_vpc_subnet_info:
@@ -58,13 +92,7 @@
       ec2_key:
         name: "{{ keypair_name }}"
       register: keypair
-
-    - name: Persist the keypair
-      copy:
-        dest: "{{ keypair_path }}"
-        content: "{{ keypair.key.private_key }}"
-        mode: 0600
-      when: keypair.changed
+      notify: Persist the keypair
 
     - name: Get the ec2 ami(s) by owner and name, if image not set
       ec2_ami_info:
@@ -101,6 +129,7 @@
         index_var: index
       async: 7200
       poll: 0
+      notify: creation
 
     - name: Wait for instance(s) creation to complete
       async_status:
@@ -109,33 +138,6 @@
       until: ec2_jobs.finished
       retries: 300
       with_items: "{{ server.results }}"
-
-    # Mandatory configuration for Molecule to function.
-
-    - name: Populate instance config dict
-      set_fact:
-        instance_conf_dict: {
-          'instance': "{{ item.instances[0].tags.instance }}",
-          'address': "{{ item.instances[0].public_ip }}",
-          'user': "{{ ssh_user }}",
-          'port': "{{ ssh_port }}",
-          'identity_file': "{{ keypair_path }}",
-          'instance_ids': "{{ item.instance_ids }}",
-          'region': "{{ item.instances[0].region if item.instances[0].region is defined else omit }}", }
-      with_items: "{{ ec2_jobs.results }}"
-      register: instance_config_dict
-      when: server.changed | bool
-
-    - name: Convert instance config dict to a list
-      set_fact:
-        instance_conf: "{{ instance_config_dict.results | map(attribute='ansible_facts.instance_conf_dict') | list }}"
-      when: server.changed | bool
-
-    - name: Dump instance config
-      copy:
-        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
-        dest: "{{ molecule_instance_config }}"
-      when: server.changed | bool
 
     - name: Wait for SSH
       wait_for:

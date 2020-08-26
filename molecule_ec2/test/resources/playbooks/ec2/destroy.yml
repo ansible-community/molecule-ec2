@@ -4,6 +4,14 @@
   connection: local
   gather_facts: false
   no_log: "{{ molecule_no_log }}"
+
+  handlers:
+    - name: Dump instance config
+      copy:
+        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
+        dest: "{{ molecule_instance_config }}"
+      listen: destruction
+
   tasks:
     - block:
         - name: Populate instance config
@@ -26,6 +34,7 @@
       when: not skip_instances
       async: 7200
       poll: 0
+      notify: destruction
 
     - name: Wait for instance(s) deletion to complete
       async_status:
@@ -40,9 +49,3 @@
     - name: Populate instance config
       set_fact:
         instance_conf: {}
-
-    - name: Dump instance config
-      copy:
-        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
-        dest: "{{ molecule_instance_config }}"
-      when: server.changed | bool
