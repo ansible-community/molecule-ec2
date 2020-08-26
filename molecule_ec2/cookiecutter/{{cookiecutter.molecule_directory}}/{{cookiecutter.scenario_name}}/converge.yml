@@ -2,14 +2,6 @@
 - name: Converge
   hosts: all
   tasks:
-    - name: Wait for boot process to finish
-      cloud_init_data_facts:
-        filter: status
-      register: res
-      until: "res.cloud_init_data_facts.status.v1.stage is defined and not res.cloud_init_data_facts.status.v1.stage"
-      retries: 50
-      delay: 5
-
     - name: "Include {{ cookiecutter.role_name }}"
       include_role:
         name: "{{ cookiecutter.role_name }}"
