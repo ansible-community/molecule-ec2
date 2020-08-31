@@ -9,7 +9,14 @@
     ssh_user: ubuntu
     ssh_port: 22
 
-    security_group_name: molecule
+    role_under_test: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY').split('/')[-1] }}"
+    scenario: "{{ lookup('env', 'MOLECULE_SCENARIO_NAME') }}"
+    # Create abbreviated versions to keep name lengths sane
+    rut: "{{ role_under_test | regex_replace('\\b(\\w).*?(?=\\b)', '\\1') | regex_replace('\\W') }}"
+    scnr: "{{ scenario | regex_replace('\\b(\\w).*?(?=\\b)', '\\1') | regex_replace('\\W') }}"
+    test_identifier: "{{ rut }}-{{ scnr }}"
+
+    security_group_name: "{{ test_identifier }}-molecule"
     security_group_description: Security group for testing Molecule
     security_group_rules:
       - proto: tcp
@@ -26,7 +33,7 @@
         to_port: 0
         cidr_ip: '0.0.0.0/0'
 
-    keypair_name: molecule_key
+    keypair_name: "{{ test_identifier }}-key"
     keypair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
   tasks:
     - name: Find the vpc for the subnet
@@ -85,14 +92,14 @@
         instance_type: "{{ item.instance_type }}"
         vpc_subnet_id: "{{ item.vpc_subnet_id }}"
         group: "{{ security_group_name }}"
-        instance_tags: "{{ item.instance_tags | combine({'instance': item.name})
+        instance_tags: "{{ item.instance_tags | combine({'instance': item.name, 'Name': test_identifier ~ '-' ~ item.name})
           if item.instance_tags is defined
-          else {'instance': item.name} }}"
+          else {'instance': item.name, 'Name': test_identifier ~ '-' ~ item.name, 'Test': role_under_test, 'Scenario': scenario} }}"
         wait: true
         assign_public_ip: true
         exact_count: 1
         count_tag:
-          instance: "{{ item.name }}"
+          Name: "{{ test_identifier ~ '-' ~ item.name }}"
       register: server
       loop: "{{ molecule_yml.platforms }}"
       loop_control:
