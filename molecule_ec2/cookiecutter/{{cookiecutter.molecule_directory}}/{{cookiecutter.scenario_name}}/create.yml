@@ -14,7 +14,7 @@
     # Create abbreviated versions to keep name lengths sane
     rut: "{{ role_under_test | regex_replace('\\b(\\w).*?(?=\\b)', '\\1') | regex_replace('\\W') }}"
     scnr: "{{ scenario | regex_replace('\\b(\\w).*?(?=\\b)', '\\1') | regex_replace('\\W') }}"
-    test_identifier: "{{ rut }}-{{ scnr }}"
+    test_identifier: "{{ lookup('env', 'EC2_TEST_IDENTIFIER') | default(rut ~ '-' ~ scnr, true) }}"
 
     security_group_name: "{{ test_identifier }}-molecule"
     security_group_description: Security group for testing Molecule
