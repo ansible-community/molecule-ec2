@@ -28,6 +28,36 @@ Molecule EC2 Plugin
 Molecule EC2 is designed to allow use of AWS EC2 for provisioning of test
 resources.
 
+.. _quickstart:
+
+Quickstart
+==========
+
+Installation
+------------
+.. code-block:: bash
+
+   pip install molecule-ec2
+
+Create a scenario
+-----------------
+
+With a new role
+^^^^^^^^^^^^^^^
+.. code-block:: bash
+
+   molecule init role -d ec2 my-role
+
+This will create a new folder *my-role* containing a bare-bone generated role like you would do with ansible-galaxy init. It will also contain a molecule folder with a default scenario using the ec2 driver
+
+In a pre-existing role
+^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: bash
+
+   molecule init scenario -d ec2
+
+This will create a default scenario in a molecule folder, located in the current working directory.
+
 Documentation
 =============
 
