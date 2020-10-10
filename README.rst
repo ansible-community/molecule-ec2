@@ -56,7 +56,36 @@ In a pre-existing role
 
    molecule init scenario -d ec2
 
-This will create a default scenario in a molecule folder, located in the current working directory.
+This will create a default scenario with the ec2 driver in a molecule folder, located in the current working directory.
+
+Example
+-------
+This is a molecule.yml example file
+
+.. code-block:: yaml
+
+   dependency:
+      name: galaxy
+   driver:
+      name: ec2
+   platforms:
+     - name: instance
+       image_owner: 099720109477
+       image_name: ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*
+       instance_type: t2.micro
+       vpc_subnet_id: <your-aws-vpc-subnet-id>
+       instance_tags:
+         - Name: molecule_instance
+   provisioner:
+     name: ansible
+   verifier:
+     name: ansible
+
+All you need to do is fill in the subnet-id you want to create your test instance into. Then run
+
+.. code-block:: bash
+
+   molecule test
 
 Documentation
 =============
