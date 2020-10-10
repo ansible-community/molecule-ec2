@@ -48,7 +48,7 @@ With a new role
 
    molecule init role -d ec2 my-role
 
-This will create a new folder *my-role* containing a bare-bone generated role like you would do with ansible-galaxy init. It will also contain a molecule folder with a default scenario using the ec2 driver
+This will create a new folder *my-role* containing a bare-bone generated role like you would do with ``ansible-galaxy init`` command. It will also contain a molecule folder with a default scenario using the ec2 driver
 
 In a pre-existing role
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -86,6 +86,17 @@ All you need to do is fill in the subnet-id you want to create your test instanc
 .. code-block:: bash
 
    molecule test
+
+.. note::
+   To make this work, you need to export your AWS credentials, as well as the AWS region you want to use, in your environment.
+
+   .. code-block:: bash
+
+      export AWS_ACCESS_KEY_ID=ACCESS_API_KEY
+      export AWS_SECRET_KEY=SECRET_API_KEY
+      export AWS_REGION=us-east-1
+
+   You can read more about managing AWS credentials with Ansible modules in the offical documentation of the `Ansible AWS modules <https://docs.ansible.com/ansible/latest/collections/amazon/aws>`_
 
 Documentation
 =============
