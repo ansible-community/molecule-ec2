@@ -103,3 +103,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 pip-wheel-metadata
+
+# IDE stuff
+.vscode
+.idea
