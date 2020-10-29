@@ -24,7 +24,8 @@ import os
 import sh
 
 from molecule import logger
-from molecule.test.conftest import run_command, change_dir_to
+from molecule.util import run_command
+from molecule.test.conftest import change_dir_to
 from molecule.test.functional.conftest import metadata_lint_update
 
 # import change_dir_to, temp_dir
@@ -37,7 +38,7 @@ def test_command_init_scenario(temp_dir):
     role_directory = os.path.join(temp_dir.strpath, "test-init")
     options = {}
     cmd = sh.molecule.bake("init", "role", "test-init", **options)
-    run_command(cmd)
+    assert run_command(cmd).returncode == 0
     metadata_lint_update(role_directory)
 
     with change_dir_to(role_directory):
@@ -48,9 +49,9 @@ def test_command_init_scenario(temp_dir):
             "driver-name": "ec2",
         }
         cmd = sh.molecule.bake("init", "scenario", "test-scenario", **options)
-        run_command(cmd)
+        assert run_command(cmd).returncode == 0
 
         assert os.path.isdir(scenario_directory)
 
         cmd = sh.molecule.bake("test", "-s", "test-scenario")
-        run_command(cmd)
+        assert run_command(cmd).returncode == 0
