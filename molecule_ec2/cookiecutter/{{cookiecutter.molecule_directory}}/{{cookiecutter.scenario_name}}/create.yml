@@ -26,8 +26,8 @@
         to_port: 0
         cidr_ip: '0.0.0.0/0'
 
-    keypair_name: molecule_key
-    keypair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
+    key_pair_name: molecule_key
+    key_pair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
   tasks:
     - name: Find the vpc for the subnet
       ec2_vpc_subnet_info:
@@ -44,28 +44,28 @@
         rules_egress: "{{ security_group_rules_egress }}"
       loop: "{{ subnet_info.results }}"
 
-    - name: Test for presence of local keypair
+    - name: Test for presence of local key pair
       stat:
-        path: "{{ keypair_path }}"
-      register: keypair_local
+        path: "{{ key_pair_path }}"
+      register: key_pair_local
 
-    - name: Delete remote keypair
+    - name: Delete remote key pair
       ec2_key:
-        name: "{{ keypair_name }}"
+        name: "{{ key_pair_name }}"
         state: absent
-      when: not keypair_local.stat.exists
+      when: not key_pair_local.stat.exists
 
-    - name: Create keypair
+    - name: Create key pair
       ec2_key:
-        name: "{{ keypair_name }}"
-      register: keypair
+        name: "{{ key_pair_name }}"
+      register: key_pair
 
-    - name: Persist the keypair
+    - name: Persist the key pair
       copy:
-        dest: "{{ keypair_path }}"
-        content: "{{ keypair.key.private_key }}"
+        dest: "{{ key_pair_path }}"
+        content: "{{ key_pair.key.private_key }}"
         mode: 0600
-      when: keypair.changed
+      when: key_pair.changed
 
     - name: Get the ec2 ami(s) by owner and name, if image not set
       ec2_ami_info:
@@ -78,7 +78,7 @@
 
     - name: Create molecule instance(s)
       ec2:
-        key_name: "{{ keypair_name }}"
+        key_name: "{{ key_pair_name }}"
         image: "{{ item.image
           if item.image is defined
           else (ami_info.results[index].images | sort(attribute='creation_date', reverse=True))[0].image_id }}"
@@ -117,7 +117,7 @@
           'address': "{{ item.instances[0].public_ip }}",
           'user': "{{ ssh_user }}",
           'port': "{{ ssh_port }}",
-          'identity_file': "{{ keypair_path }}",
+          'identity_file': "{{ key_pair_path }}",
           'instance_ids': "{{ item.instance_ids }}", }
       with_items: "{{ ec2_jobs.results }}"
       register: instance_config_dict
