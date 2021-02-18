@@ -169,26 +169,29 @@ class EC2(Driver):
 
     @property
     def login_cmd_template(self):
-        if self._config.command_args.get('host'):
-            hostname = self._config.command_args['host']
+        if self._config.command_args.get("host"):
+            hostname = self._config.command_args["host"]
         elif len(self._config.platforms.instances) == 1:
-            hostname = self._config.platforms.instances[0]['name']
+            hostname = self._config.platforms.instances[0]["name"]
         else:
             LOG.error("Please specify instance via '--host'")
             sys.exit(1)
-        
+
         ansible_connection_options = self.ansible_connection_options(hostname)
-        if ansible_connection_options.get('ansible_connection') == 'winrm':
+        if ansible_connection_options.get("ansible_connection") == "winrm":
             return (
                 "xfreerdp "
-                "\"/u:%s\" "
-                "\"/p:%s\" "
+                '"/u:%s" '
+                '"/p:%s" '
                 "/v:%s "
                 "/cert-tofu "
                 "+clipboard "
-                "/grab-keyboard" % (ansible_connection_options['ansible_user'],
-                                    ansible_connection_options['ansible_password'],
-                                    ansible_connection_options['ansible_host'])
+                "/grab-keyboard"
+                % (
+                    ansible_connection_options["ansible_user"],
+                    ansible_connection_options["ansible_password"],
+                    ansible_connection_options["ansible_host"],
+                )
             )
 
         else:  # normal ssh connection
