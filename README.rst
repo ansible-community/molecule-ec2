@@ -48,7 +48,10 @@ With a new role
 
    molecule init role -d ec2 my-role
 
-This will create a new folder *my-role* containing a bare-bone generated role like you would do with ``ansible-galaxy init`` command. It will also contain a molecule folder with a default scenario using the ec2 driver
+This will create a new folder *my-role* containing a bare-bone generated
+role like you would do with ``ansible-galaxy init`` command.
+It will also contain a molecule folder with a default scenario
+using the ec2 driver
 
 In a pre-existing role
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -56,7 +59,8 @@ In a pre-existing role
 
    molecule init scenario -d ec2
 
-This will create a default scenario with the ec2 driver in a molecule folder, located in the current working directory.
+This will create a default scenario with the ec2 driver in a molecule folder,
+located in the current working directory.
 
 Example
 -------
@@ -81,7 +85,9 @@ This is a molecule.yml example file
    verifier:
      name: ansible
 
-All you need to do is fill in the subnet-id you want to create your test instance into. Then run
+All you need to do is fill in the subnet-id you want
+to create your test instance into.
+Then run
 
 .. code-block:: bash
 
@@ -96,7 +102,8 @@ All you need to do is fill in the subnet-id you want to create your test instanc
       export AWS_SECRET_KEY=SECRET_API_KEY
       export AWS_REGION=us-east-1
 
-   You can read more about managing AWS credentials with Ansible modules in the offical documentation of the `Ansible AWS modules <https://docs.ansible.com/ansible/latest/collections/amazon/aws>`_
+   You can read more about managing AWS credentials with Ansible modules
+   in the official documentation of the `Ansible AWS modules <https://docs.ansible.com/ansible/latest/collections/amazon/aws>`_
 
 Documentation
 =============
