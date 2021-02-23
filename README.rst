@@ -51,8 +51,9 @@ With a new role
 This will create a new folder *my-role* containing a bare-bone generated
 role like you would do with ``ansible-galaxy init`` command.
 It will also contain a molecule folder with a default scenario
-using the ec2 driver (using ansible community.aws.ec2_instance collection). Install
-the collection using `ansible-galaxy install -r test_requirements.yml`.
+using the ec2 driver (using ansible community.aws.ec2_instance collection).
+Install the collection using
+`ansible-galaxy install -r test_requirements.yml`.
 
 In a pre-existing role
 ^^^^^^^^^^^^^^^^^^^^^^
