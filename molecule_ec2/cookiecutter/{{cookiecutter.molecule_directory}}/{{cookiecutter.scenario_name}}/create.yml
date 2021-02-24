@@ -1,5 +1,8 @@
 ---
 {% raw -%}
+collections:
+  - name: community.aws
+
 - name: Create
   hosts: localhost
   connection: local
@@ -77,7 +80,7 @@
       register: ami_info
 
     - name: Create molecule instance(s)
-      community.aws.ec2_instance:
+      ec2_instance:
         key_name: "{{ key_pair_name }}"
         image_id: "{{ item.image
           if item.image is defined

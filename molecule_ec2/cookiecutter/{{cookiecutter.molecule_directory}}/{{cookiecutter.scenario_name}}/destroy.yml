@@ -1,5 +1,8 @@
 ---
 {% raw -%}
+collections:
+  - name: community.aws
+
 - name: Destroy
   hosts: localhost
   connection: local
@@ -18,7 +21,7 @@
             skip_instances: true
 
     - name: Destroy molecule instance(s)
-      community.aws.ec2_instance:
+      ec2_instance:
         state: absent
         instance_ids: "{{ item.instance_ids }}"
       register: server
