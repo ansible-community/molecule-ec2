@@ -169,15 +169,41 @@ class EC2(Driver):
 
     @property
     def login_cmd_template(self):
-        connection_options = " ".join(self.ssh_connection_options)
+        if self._config.command_args.get("host"):
+            hostname = self._config.command_args["host"]
+        elif len(self._config.platforms.instances) == 1:
+            hostname = self._config.platforms.instances[0]["name"]
+        else:
+            LOG.error("Please specify instance via '--host'")
+            sys.exit(1)
 
-        return (
-            "ssh {{address}} "
-            "-l {{user}} "
-            "-p {{port}} "
-            "-i {{identity_file}} "
-            "{}"
-        ).format(connection_options)
+        ansible_connection_options = self.ansible_connection_options(hostname)
+        if ansible_connection_options.get("ansible_connection") == "winrm":
+            return (
+                "xfreerdp "
+                '"/u:%s" '
+                '"/p:%s" '
+                "/v:%s "
+                "/cert-tofu "
+                "+clipboard "
+                "/grab-keyboard"
+                % (
+                    ansible_connection_options["ansible_user"],
+                    ansible_connection_options["ansible_password"],
+                    ansible_connection_options["ansible_host"],
+                )
+            )
+
+        else:  # normal ssh connection
+            connection_options = " ".join(self.ssh_connection_options)
+
+            return (
+                "ssh {{address}} "
+                "-l {{user}} "
+                "-p {{port}} "
+                "-i {{identity_file}} "
+                "{}"
+            ).format(connection_options)
 
     @property
     def default_safe_files(self):
@@ -254,7 +280,7 @@ class EC2(Driver):
         pass
 
     def template_dir(self):
-        """ Return path to its own cookiecutterm templates. It is used by init
+        """Return path to its own cookiecutterm templates. It is used by init
         command in order to figure out where to load the templates from.
         """
         return os.path.join(os.path.dirname(__file__), "cookiecutter")

@@ -28,6 +28,85 @@ Molecule EC2 Plugin
 Molecule EC2 is designed to allow use of AWS EC2 for provisioning of test
 resources.
 
+.. _quickstart:
+
+Quickstart
+==========
+
+Installation
+------------
+.. code-block:: bash
+
+   pip install molecule-ec2
+
+Create a scenario
+-----------------
+
+With a new role
+^^^^^^^^^^^^^^^
+.. code-block:: bash
+
+   molecule init role -d ec2 my-role
+
+This will create a new folder *my-role* containing a bare-bone generated
+role like you would do with ``ansible-galaxy init`` command.
+It will also contain a molecule folder with a default scenario
+using the ec2 driver (using ansible community.aws.ec2_instance collection).
+Install the collection using
+`ansible-galaxy install -r test_requirements.yml`.
+
+In a pre-existing role
+^^^^^^^^^^^^^^^^^^^^^^
+.. code-block:: bash
+
+   molecule init scenario -d ec2
+
+This will create a default scenario with the ec2 driver in a molecule folder,
+located in the current working directory.
+
+Example
+-------
+This is a molecule.yml example file
+
+.. code-block:: yaml
+
+   dependency:
+      name: galaxy
+   driver:
+      name: ec2
+   platforms:
+     - name: instance
+       image_owner: 099720109477
+       image_name: ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*
+       instance_type: t2.micro
+       vpc_subnet_id: <your-aws-vpc-subnet-id>
+       instance_tags:
+         - Name: molecule_instance
+   provisioner:
+     name: ansible
+   verifier:
+     name: ansible
+
+All you need to do is fill in the subnet-id you want
+to create your test instance into.
+Then run
+
+.. code-block:: bash
+
+   molecule test
+
+.. note::
+   To make this work, you need to export your AWS credentials, as well as the AWS region you want to use, in your environment.
+
+   .. code-block:: bash
+
+      export AWS_ACCESS_KEY_ID=ACCESS_API_KEY
+      export AWS_SECRET_KEY=SECRET_API_KEY
+      export AWS_REGION=us-east-1
+
+   You can read more about managing AWS credentials with Ansible modules
+   in the official documentation of the `Ansible AWS modules <https://docs.ansible.com/ansible/latest/collections/amazon/aws>`_
+
 Documentation
 =============
 
