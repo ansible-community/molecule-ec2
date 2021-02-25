@@ -1,0 +1,4 @@
+---
+warn_list: # or 'skip_list' to silence them completely
+  - '208'  # File permissions unset or incorrect
+  - experimental  # all rules tagged as experimental

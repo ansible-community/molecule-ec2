@@ -68,4 +68,4 @@ repos:
         # do not add file filters here as ansible-lint does not give reliable
         # results when called with individual files.
         # https://github.com/ansible/ansible-lint/issues/611
-        entry: env ANSIBLE_LIBRARY=molecule_vagrant/modules ansible-lint --force-color -p -v --exclude=EXCLUDE_PATHS */cookiecutter/
+        entry: env ANSIBLE_LIBRARY=molecule_vagrant/modules ansible-lint --force-color -p -v --exclude=molecule_ec2/cookiecutter/
