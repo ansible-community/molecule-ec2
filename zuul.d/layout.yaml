@@ -69,7 +69,7 @@
     vars:
       tox_envlist: py36-ansible210-unit
       tox_environment:
-        PYTEST_REQPASS: 489
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - job:
@@ -81,7 +81,7 @@
     vars:
       tox_envlist: py36-ansible210-functional
       tox_environment:
-        PYTEST_REQPASS: 37
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - job:
@@ -90,7 +90,7 @@
     vars:
       tox_envlist: py36-ansible29-unit
       tox_environment:
-        PYTEST_REQPASS: 489
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - job:
@@ -100,7 +100,7 @@
     vars:
       tox_envlist: py36-ansible29-functional
       tox_environment:
-        PYTEST_REQPASS: 37
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - job:
@@ -109,7 +109,7 @@
     vars:
       tox_envlist: py37-ansible210-unit
       tox_environment:
-        PYTEST_REQPASS: 489
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - job:
@@ -119,7 +119,7 @@
     vars:
       tox_envlist: py37-ansible210-functional
       tox_environment:
-        PYTEST_REQPASS: 37
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - job:
@@ -130,7 +130,7 @@
     vars:
       tox_envlist: py37-ansible29-unit
       tox_environment:
-        PYTEST_REQPASS: 489
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - job:
@@ -142,7 +142,7 @@
     vars:
       tox_envlist: py37-ansible29-functional
       tox_environment:
-        PYTEST_REQPASS: 37
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - job:
@@ -155,7 +155,7 @@
     vars:
       tox_envlist: py36-ansibledevel-unit
       tox_environment:
-        PYTEST_REQPASS: 489
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - job:
@@ -168,7 +168,7 @@
     vars:
       tox_envlist: py36-ansibledevel-functional
       tox_environment:
-        PYTEST_REQPASS: 37
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - job:
@@ -179,7 +179,7 @@
     vars:
       tox_envlist: py37-ansible210-unit
       tox_environment:
-        PYTEST_REQPASS: 489
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - job:
@@ -191,7 +191,7 @@
     vars:
       tox_envlist: py37-ansible210-functional
       tox_environment:
-        PYTEST_REQPASS: 37
+        PYTEST_REQPASS: 1
     irrelevant-files: *doc-files
 
 - project:
