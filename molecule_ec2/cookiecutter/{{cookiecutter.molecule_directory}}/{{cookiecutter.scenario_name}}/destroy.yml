@@ -22,6 +22,14 @@
           set_fact:
             instance_conf: "{{ lookup('file', molecule_instance_config) | from_yaml }}"
             skip_instances: false
+        - name: Get instances list
+          community.aws.ec2_instance_info:
+            filters:
+              'tag:created_by': 'molecule'
+              'tag:platform_name': "{{ molecule_yml.platforms | map(attribute='name') | list }}"
+              'tag:molecule_run_id': '{{ run_id }}'
+              'tag:project_name': '{{ project_name }}'
+              'tag:scenario_name': '{{ scenario_name }}'
       rescue:
         - name: Populate instance config when file missing
           set_fact:
