@@ -8,7 +8,7 @@
   handlers:
     - name: Dump instance config
       copy:
-        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
+        content: "{{ instance_conf | to_json | from_json | to_yaml | molecule_header }}"
         dest: "{{ molecule_instance_config }}"
       listen: destruction
 
@@ -16,7 +16,7 @@
     - block:
         - name: Populate instance config
           set_fact:
-            instance_conf: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
+            instance_conf: "{{ lookup('file', molecule_instance_config) | from_yaml }}"
             skip_instances: false
       rescue:
         - name: Populate instance config when file missing
@@ -25,7 +25,7 @@
             skip_instances: true
 
     - name: Destroy molecule instance(s)
-      ec2:
+      community.aws.ec2_instance:
         state: absent
         instance_ids: "{{ item.instance_ids }}"
         region: "{{ item.region if item.region is defined else omit }}"

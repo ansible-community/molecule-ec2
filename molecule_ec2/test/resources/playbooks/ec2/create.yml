@@ -57,7 +57,7 @@
 
     - name: Dump instance config
       copy:
-        content: "{{ instance_conf | to_json | from_json | molecule_to_yaml | molecule_header }}"
+        content: "{{ instance_conf | to_json | from_json | to_yaml }}"
         dest: "{{ molecule_instance_config }}"
       listen: creation
 
@@ -104,7 +104,7 @@
       register: ami_info
 
     - name: Create molecule instance(s)
-      ec2:
+      community.aws.ec2_instance:
         key_name: "{{ key_pair_name }}"
         image: "{{ item.image
           if item.image is defined
@@ -146,7 +146,7 @@
         search_regex: SSH
         delay: 10
         timeout: 320
-      with_items: "{{ lookup('file', molecule_instance_config) | molecule_from_yaml }}"
+      with_items: "{{ lookup('file', molecule_instance_config) | from_yaml }}"
 
     - name: Wait for boot process to finish
       pause:
