@@ -1,7 +1,7 @@
 ---
 {% raw -%}
-collections:
-  - name: community.aws
+# collections:
+#  - name: community.aws
 
 - name: Destroy
   hosts: localhost

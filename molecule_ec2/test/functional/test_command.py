@@ -27,9 +27,19 @@ import functools
 from molecule import logger, util
 from molecule.test.conftest import change_dir_to
 
+pytest_plugins = [
+    "helpers_namespace",
+    "html",
+    "mock",
+    "plus",
+    "verbose-parametrize",
+    "dependency",
+]
+
 LOG = logger.get_logger(__name__)
 
 
+@pytest.helpers.register
 @pytest.fixture
 def with_scenario(scenario_name):
     scenario_directory = os.path.join(
@@ -40,12 +50,13 @@ def with_scenario(scenario_name):
         yield
         if scenario_name:
             msg = "CLEANUP: Destroying instances for all scenario(s)"
-            LOG.out(msg)
+            LOG.info(msg)
             options = {"driver_name": "ec2", "all": True}
             cmd = sh.molecule.bake("destroy", **options)
             pytest.helpers.run_command(cmd)
 
 
+@pytest.helpers.register
 @pytest.fixture
 def scenario_name(request):
     try:
@@ -54,6 +65,7 @@ def scenario_name(request):
         return None
 
 
+@pytest.helpers.register
 @pytest.fixture
 def driver_name():
     return "ec2"
