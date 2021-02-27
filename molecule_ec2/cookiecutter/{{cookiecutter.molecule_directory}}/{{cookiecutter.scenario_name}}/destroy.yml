@@ -9,6 +9,13 @@
   gather_facts: false
   no_log: "{{ molecule_no_log }}"
 
+  vars:
+      project_name: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+      scenario_name: "{{ lookup('env', 'MOLECULE_SCENARIO_NAME') }}"
+      run_id: "{{ lookup('env', 'MOLECULE_RUN_ID') }}"
+      key_pair_name: "{{ project_name }}-{{ scenario_name }}-molecule_key-{{ run_id }}"
+      key_pair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/{{ key_pair_name }}"
+
   handlers:
     - name: Dump instance config
       copy:
