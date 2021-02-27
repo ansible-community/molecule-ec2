@@ -31,7 +31,7 @@
     - name: Destroy molecule instance(s)
       community.aws.ec2_instance:
         state: absent
-        instance_ids: "{{ item.instance_ids }}"
+        instance_ids: "{{ ec2_sets.instances | map(attribute='instance_id') | list }}"
         region: "{{ item.region if item.region is defined else omit }}"
       register: server
       with_items: "{{ instance_conf }}"
