@@ -87,7 +87,7 @@
       register: ami_info
 
     - name: Create molecule instance(s)
-      ec2_instance:
+      community.aws.ec2_instance:
         key_name: "{{ key_pair_name }}"
         image_id: "{{ item.image
           if item.image is defined
