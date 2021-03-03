@@ -12,23 +12,6 @@ collections:
     ssh_user: ubuntu
     ssh_port: 22
 
-    security_group_name: molecule
-    security_group_description: Security group for testing Molecule
-    security_group_rules:
-      - proto: tcp
-        from_port: "{{ ssh_port }}"
-        to_port: "{{ ssh_port }}"
-        cidr_ip: '0.0.0.0/0'
-      - proto: icmp
-        from_port: 8
-        to_port: -1
-        cidr_ip: '0.0.0.0/0'
-    security_group_rules_egress:
-      - proto: -1
-        from_port: 0
-        to_port: 0
-        cidr_ip: '0.0.0.0/0'
-
     key_pair_name: molecule_key
     key_pair_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/ssh_key"
   tasks:
@@ -41,10 +24,10 @@ collections:
     - name: Create security groups
       ec2_group:
         vpc_id: "{{ item.subnets[0].vpc_id }}"
-        name: "{{ security_group_name }}"
-        description: "{{ security_group_name }}"
-        rules: "{{ security_group_rules }}"
-        rules_egress: "{{ security_group_rules_egress }}"
+        name: "{{ molecule_yml.driver.security_group_name }}"
+        description: "{{ molecule_yml.driver.security_group_name }}"
+        rules: "{{ molecule_yml.driver.security_group_rules }}"
+        rules_egress: "{{ molecule_yml.driver.security_group_rules_egress }}"
       loop: "{{ subnet_info.results }}"
 
     - name: Test for presence of local key pair
