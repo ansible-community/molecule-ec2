@@ -1,4 +1,5 @@
 ---
+{% raw -%}
 dependency:
   name: galaxy
 driver:
@@ -21,8 +22,9 @@ platforms:
     image_owner: ""
     instance_type: ""
     vpc_subnet_id: ""
-    region: "" 
+    region: ""
 provisioner:
   name: ansible
 verifier:
   name: ansible
+{%- endraw %}
