@@ -80,7 +80,7 @@ This is a molecule.yml example file
        image_name: ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*
        instance_type: t2.micro
        vpc_subnet_id: <your-aws-vpc-subnet-id>
-       instance_tags:
+       tags:
          - Name: molecule_instance
    provisioner:
      name: ansible
