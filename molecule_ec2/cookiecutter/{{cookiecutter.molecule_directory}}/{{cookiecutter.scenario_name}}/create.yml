@@ -157,7 +157,7 @@
 
     - name: Validate discovered information
       assert:
-        that: 
+        that:
           - platform.image or (ami_info.results[index].images | length > 0)
           - platform.vpc_id or (subnet_info.results[index].subnets | length > 0)
         quiet: true
@@ -172,9 +172,9 @@
         profile: "{{ item.aws_profile | default(omit) }}"
         region: "{{ item.region | default(omit) }}"
         name: "{{ item.key_name }}"
-        key_material: "{{ keypair.public_key }}"
+        key_material: "{{ local_keypair.public_key }}"
       vars:
-        keypair: "{{ local_keypairs.results[index] }}"
+        local_keypair: "{{ local_keypairs.results[index] }}"
       loop: "{{ platforms }}"
       loop_control:
         index_var: index
@@ -258,7 +258,7 @@
           register: ec2_instances
           until: ec2_instances is finished
           retries: 300
-      
+
         - name: Collect instance configs
           set_fact:
             instance_config:
@@ -313,7 +313,7 @@
           until: ssh_wait_async is finished
           retries: 300
           delay: 1
-      
+
         - name: Wait for boot process to finish
           pause:
             seconds: "{{ platforms | map(attribute='boot_wait_seconds') | max }}"
