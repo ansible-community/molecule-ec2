@@ -23,7 +23,7 @@ repos:
       - id: black
         language_version: python3
   - repo: https://gitlab.com/pycqa/flake8.git
-    rev: 3.8.4
+    rev: 3.9.0
     hooks:
       - id: flake8
         additional_dependencies:
@@ -60,7 +60,7 @@ repos:
         #       use jinja templating, this will often fail and the syntax
         #       error will be discovered in execution anyway)
   - repo: https://github.com/ansible/ansible-lint.git
-    rev: v4.3.5
+    rev: v5.0.5a1
     hooks:
       - id: ansible-lint
         always_run: true
