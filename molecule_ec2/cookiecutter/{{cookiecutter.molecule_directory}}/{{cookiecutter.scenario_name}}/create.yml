@@ -65,6 +65,7 @@
       ssh_port: "{{ default_ssh_port }}"
       cloud_config: {}
       image: ""
+      image_filters: {}
       image_name: ""
       image_owner: [self]
       name: ""
@@ -72,7 +73,9 @@
       security_groups: []
       tags: {}
       volumes: []
+      vpc_filters: {}
       vpc_id: ""
+      vpc_subnet_filters: {}
       vpc_subnet_id: ""
 
     # Merging defaults into a list of dicts is, it turns out, not straightforward
@@ -84,9 +87,15 @@
            | map('items2dict')
            | list }}
   pre_tasks:
+    - name: Write run config to file
+      copy:
+        dest: "{{ run_config_path }}"
+        content: "{{ run_config | to_yaml }}"
+
     - name: Validate platform configurations
       assert:
         that:
+          # Single field validations
           - platforms | length > 0
           - platform.name is string and platform.name | length > 0
           - platform.assign_public_ip is boolean
@@ -94,8 +103,9 @@
           - platform.boot_wait_seconds is integer and platform.boot_wait_seconds >= 0
           - platform.cloud_config is mapping
           - platform.image is string
+          - platform.image_filters is mapping
           - platform.image_name is string
-          - platform.image_owner is sequence or (platform.image_owner is string and platform.image_owner | length > 0)
+          - (platform.image_owner is sequence or platform.image_owner is string) and platform.image_owner | length > 0
           - platform.instance_type is string and platform.instance_type | length > 0
           - platform.key_inject_method is in ["cloud-init", "ec2"]
           - platform.key_name is string and platform.key_name | length > 0
@@ -111,19 +121,20 @@
           - platform.ssh_port is integer and platform.ssh_port in range(1, 65536)
           - platform.tags is mapping
           - platform.volumes is sequence
+          - platform.vpc_filters is mapping
           - platform.vpc_id is string
-          - platform.vpc_subnet_id is string and platform.vpc_subnet_id | length > 0
+          - platform.vpc_subnet_filters is mapping
+          - platform.vpc_subnet_id is string
+
+          # "One of" tests
+          - platform.image_filters | length > 0 or platform.image | length > 0 or platform.image_name | length > 0
+          - platform.vpc_subnet_filters | length > 0 or platform.vpc_subnet_id | length > 0
         quiet: true
       loop: '{{ platforms }}'
       loop_control:
         loop_var: platform
         label: "{{ platform.name }}"
   tasks:
-    - name: Write run config to file
-      copy:
-        dest: "{{ run_config_path }}"
-        content: "{{ run_config | to_yaml }}"
-
     - name: Generate local key pairs
       openssh_keypair:
         path: "{{ item.private_key_path }}"
@@ -135,31 +146,49 @@
         label: "{{ item.name }}"
       register: local_keypairs
 
-    - name: Look up EC2 AMI(s) by owner and name (if image not set)
+    - name: Look up AMIs (if needed)
       ec2_ami_info:
+        profile: "{{ item.aws_profile or omit }}"
+        region: "{{ item.region or omit }}"
         owners: "{{ item.image_owner }}"
-        filters:
-          name: "{{ item.image_name }}"
+        filters: "{{ platform_default_filters | combine(item.image_filters) }}"
       loop: "{{ platforms }}"
       loop_control:
         label: "{{ item.name }}"
+      vars:
+        platform_default_filters: "{{ item.image_name | ternary({'name': item.image_name}, {}) }}"
       when: not item.image
       register: ami_info
 
-    - name: Look up subnets to determine VPCs (if needed)
-      ec2_vpc_subnet_info:
-        subnet_ids: "{{ item.vpc_subnet_id }}"
+    - name: Look up VPCs (if needed)
+      ec2_vpc_net_info:
+        profile: "{{ item.aws_profile or omit }}"
+        region: "{{ item.region or omit }}"
+        filters: "{{ item.vpc_filters }}"
       loop: "{{ platforms }}"
       loop_control:
         label: "{{ item.name }}"
-      when: not item.vpc_id
-      register: subnet_info
+      when: not item.vpc_id or item.vpc_subnet_id
+      register: vpc_info
+
+    - name: Look up VPC subnets (if needed)
+      ec2_vpc_subnet_info:
+        profile: "{{ item.aws_profile or omit }}"
+        region: "{{ item.region or omit }}"
+        filters: "{{ item.vpc_subnet_filters }}"
+        subnet_ids: "{{ item.vpc_subnet_id or omit }}"
+      loop: "{{ platforms }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when: not item.vpc_subnet_id
+      register: vpc_subnet_info
 
     - name: Validate discovered information
       assert:
         that:
           - platform.image or (ami_info.results[index].images | length > 0)
-          - platform.vpc_id or (subnet_info.results[index].subnets | length > 0)
+          - platform.vpc_id or (vpc_info.results[index].vpcs | length > 0)
+          - platform.vpc_subnet_id or (vpc_subnet_info.results[index].subnets | length > 0)
         quiet: true
       loop: "{{ platforms }}"
       loop_control:
@@ -169,12 +198,12 @@
 
     - name: Create ephemeral EC2 keys (if needed)
       ec2_key:
-        profile: "{{ item.aws_profile | default(omit) }}"
-        region: "{{ item.region | default(omit) }}"
-        name: "{{ item.key_name }}"
-        key_material: "{{ local_keypair.public_key }}"
+        profile: "{{ item.aws_profile or omit }}"
+        region: "{{ item.region or omit }}"
+        name: "{{ item.key_name or omit }}"
+        key_material: "{{ platform_local_keypair.public_key }}"
       vars:
-        local_keypair: "{{ local_keypairs.results[index] }}"
+        platform_local_keypair: "{{ local_keypairs.results[index] }}"
       loop: "{{ platforms }}"
       loop_control:
         index_var: index
@@ -184,15 +213,16 @@
 
     - name: Create ephemeral security groups (if needed)
       ec2_group:
-        profile: "{{ item.aws_profile | default(omit) }}"
-        region: "{{ item.region | default(omit) }}"
-        vpc_id: "{{ item.vpc_id or vpc_subnet.vpc_id }}"
+        profile: "{{ item.aws_profile or omit }}"
+        region: "{{ item.region or omit }}"
+        vpc_id: "{{ item.vpc_id or platform_vpc_subnet.vpc_id or platform_vpc.vpc_id }}"
         name: "{{ item.security_group_name }}"
         description: "{{ item.security_group_description }}"
         rules: "{{ item.security_group_rules }}"
         rules_egress: "{{ item.security_group_rules_egress }}"
       vars:
-        vpc_subnet: "{{ subnet_info.results[index].subnets[0] }}"
+        platform_vpc: "{{ vpc_info.results[index].vpcs[0] }}"
+        platform_vpc_subnet: "{{ vpc_subnet_info.results[index].subnets[0] }}"
       loop: "{{ platforms }}"
       loop_control:
         index_var: index
@@ -201,12 +231,12 @@
 
     - name: Create ephemeral EC2 instance(s)
       ec2_instance:
-        profile: "{{ item.aws_profile | default(omit) }}"
-        region: "{{ item.region | default(omit) }}"
+        profile: "{{ item.aws_profile or omit }}"
+        region: "{{ item.region or omit }}"
         filters: "{{ platform_filters }}"
         instance_type: "{{ item.instance_type }}"
         image_id: "{{ platform_image_id }}"
-        vpc_subnet_id: "{{ item.vpc_subnet_id }}"
+        vpc_subnet_id: "{{ item.vpc_subnet_id or platform_vpc_subnet.subnet_id }}"
         security_groups: "{{ platform_security_groups }}"
         network:
           assign_public_ip: "{{ item.assign_public_ip }}"
@@ -239,6 +269,8 @@
         platform_tags: "{{ (item.tags or {}) | combine(platform_generated_tags) }}"
         platform_filter_keys: "{{ platform_generated_tags.keys() | map('regex_replace', '^(.+)$', 'tag:\\1') }}"
         platform_filters: "{{ dict(platform_filter_keys | zip(platform_generated_tags.values())) }}"
+
+        platform_vpc_subnet: "{{ vpc_subnet_info.results[index].subnets[0] }}"
       loop: "{{ platforms }}"
       loop_control:
         index_var: index
@@ -263,14 +295,14 @@
           set_fact:
             instance_config:
               instance: "{{ item.name }}"
-              address: "{{ item.assign_public_ip | ternary(instance.public_ip_address, instance.private_ip_address) }}"
+              address: "{{ item.assign_public_ip | ternary(platform_instance.public_ip_address, platform_instance.private_ip_address) }}"
               user: "{{ item.ssh_user }}"
               port: "{{ item.ssh_port }}"
               identity_file: "{{ item.private_key_path }}"
               instance_ids:
-                - "{{ instance.instance_id }}"
+                - "{{ platform_instance.instance_id }}"
           vars:
-            instance: "{{ ec2_instances.results[index].instances[0] }}"
+            platform_instance: "{{ ec2_instances.results[index].instances[0] }}"
           loop: "{{ platforms }}"
           loop_control:
             index_var: index
@@ -310,7 +342,7 @@
             index_var: index
             label: "{{ platforms[index].name }}"
           register: ssh_wait
-          until: ssh_wait_async is finished
+          until: ssh_wait is finished
           retries: 300
           delay: 1
 
