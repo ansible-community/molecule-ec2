@@ -1,5 +1,4 @@
 {% raw -%}
----
 - name: Create
   hosts: localhost
   connection: local
@@ -175,11 +174,13 @@
       ec2_vpc_subnet_info:
         profile: "{{ item.aws_profile or omit }}"
         region: "{{ item.region or omit }}"
-        filters: "{{ item.vpc_subnet_filters }}"
+        filters: "{{ platform_default_filters | combine(item.vpc_subnet_filters) }}"
         subnet_ids: "{{ item.vpc_subnet_id or omit }}"
       loop: "{{ platforms }}"
       loop_control:
         label: "{{ item.name }}"
+      vars:
+        platform_default_filters: "{{ item.vpc_id | ternary({'vpc-id': item.vpc_id}, {}) }}"
       when: not item.vpc_subnet_id
       register: vpc_subnet_info
 
