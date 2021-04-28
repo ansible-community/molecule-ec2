@@ -67,6 +67,7 @@
     - name: Look up subnets to determine VPCs (if needed)
       ec2_vpc_subnet_info:
         subnet_ids: "{{ item.vpc_subnet_id }}"
+        region: "{{ item.region | default(omit) }}"
       loop: "{{ platforms }}"
       loop_control:
         label: "{{ item.name }}"
