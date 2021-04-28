@@ -36,7 +36,6 @@ key_inject_method           "cloud-init" or "ec2", see SSH Key section
 key_name                    SSH key name, see SSH Key section
 name                        Name for platform entry, used for Ansible inventory
 private_key_path            SSH key private path, see SSH Key section
-public_key_path             Not used
 region                      AWS region to use, defaults to AWS boto defaults
 security_group_name         Name group to create, see Security Group section
 security_group_description  Group description, see Security Group section
@@ -114,8 +113,6 @@ For this configuration the `ssh_user` option is ignored, the user is the default
 For either option the `private_key_path` can be supplied to specify an existing key.
 A provided private key must not have a passphrase, not only will it not work, for Ansible 2.9 it will result in the key being replaced.
 If `private_key_path` is not specified, a file generated specifically for the creation.
-
-`public_key_path` is not actually used.
 
 Examples
 --------

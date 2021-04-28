@@ -25,7 +25,6 @@
     default_key_inject_method: cloud-init # valid values: [cloud-init, ec2]
     default_key_name: "molecule-{{ run_config.run_id }}"
     default_private_key_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/id_rsa"
-    default_public_key_path: "{{ default_private_key_path }}.pub"
     default_ssh_user: ubuntu
     default_ssh_port: 22
     default_user_data: ''
@@ -55,7 +54,6 @@
       key_inject_method: "{{ default_key_inject_method }}"
       key_name: "{{ default_key_name }}"
       private_key_path: "{{ default_private_key_path }}"
-      public_key_path: "{{ default_public_key_path }}"
       security_group_name: "{{ default_security_group_name }}"
       security_group_description: "{{ default_security_group_description }}"
       security_group_rules: "{{ default_security_group_rules }}"
@@ -109,7 +107,6 @@
           - platform.key_inject_method is in ["cloud-init", "ec2"]
           - platform.key_name is string and platform.key_name | length > 0
           - platform.private_key_path is string and platform.private_key_path | length > 0
-          - platform.public_key_path is string and platform.public_key_path | length > 0
           - platform.region is string
           - platform.security_group_name is string and platform.security_group_name | length > 0
           - platform.security_group_description is string and platform.security_group_description | length > 0
