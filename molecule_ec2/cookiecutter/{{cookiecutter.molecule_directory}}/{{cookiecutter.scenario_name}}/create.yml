@@ -137,9 +137,6 @@
     - name: Generate local key pairs
       openssh_keypair:
         path: "{{ item.private_key_path }}"
-        type: rsa
-        size: 2048
-        regenerate: never
       loop: "{{ platforms }}"
       loop_control:
         label: "{{ item.name }}"

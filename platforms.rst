@@ -112,7 +112,8 @@ The instance is created and associated with that key, the default cloud-init set
 For this configuration the `ssh_user` option is ignored, the user is the default for the image being used.
 
 For either option the `private_key_path` can be supplied to specify an existing key.
-Otherwise one is generated specifically for the creation.
+A provided private key must not have a passphrase, not only will it not work, for Ansible 2.9 it will result in the key being replaced.
+If `private_key_path` is not specified, a file generated specifically for the creation.
 
 `public_key_path` is not actually used.
 
