@@ -4,18 +4,6 @@ Options documentation
 
 Molecule EC2 allows a wide degree of customisation via platform arguments.
 
-Environment Variables
-=====================
-
-In addition to the standard molecule environment variables, the following
-system environment variables are used.
-
-=========================== ========================================================
-  Variable                    Description
-=========================== ========================================================
-AWS_PROFILE                 Sets the aws_profile parameter if it is supplied
-=========================== ========================================================
-
 Platform Arguments
 ==================
 
@@ -23,7 +11,7 @@ Platform Arguments
   Variable                    Description
 =========================== ========================================================
 assign_public_ip            Assign a public ip, default = True
-aws_profile                 Boto profile, default = AWS_PROFILE or omits
+aws_profile                 Boto profile, default falls back to boto defaults
 boot_wait_seconds           Amount of time to wait after ssh starts
 cloud_config                Dictionary suitable for instance user_data
 connection_options          See Connection Options section
