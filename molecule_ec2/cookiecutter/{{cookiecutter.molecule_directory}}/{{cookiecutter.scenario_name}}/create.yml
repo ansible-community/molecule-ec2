@@ -31,15 +31,7 @@
 
     default_security_group_name: "molecule-{{ run_config.run_id }}"
     default_security_group_description: Ephemeral security group for Molecule instances
-    default_security_group_rules:
-      - proto: tcp
-        from_port: "{{ default_ssh_port }}"
-        to_port: "{{ default_ssh_port }}"
-        cidr_ip: "0.0.0.0/0"
-      - proto: icmp
-        from_port: 8
-        to_port: -1
-        cidr_ip: "0.0.0.0/0"
+    default_security_group_rules: []  # Actual default done at usage to allow use of ssh_port variable
     default_security_group_rules_egress:
       - proto: -1
         from_port: 0
@@ -213,11 +205,19 @@
         vpc_id: "{{ item.vpc_id or platform_vpc_subnet.vpc_id or platform_vpc.vpc_id }}"
         name: "{{ item.security_group_name }}"
         description: "{{ item.security_group_description }}"
-        rules: "{{ item.security_group_rules }}"
+        rules: "{{ item.security_group_rules or default_security_group_rules }}"
         rules_egress: "{{ item.security_group_rules_egress }}"
       vars:
         platform_vpc: "{{ vpc_info.results[index].vpcs[0] }}"
         platform_vpc_subnet: "{{ vpc_subnet_info.results[index].subnets[0] }}"
+        default_security_group_rules:
+          - proto: tcp
+            ports: "{{ item.ssh_port }}"
+            cidr_ip: "0.0.0.0/0"
+          - proto: icmp
+            from_port: 8
+            to_port: -1
+            cidr_ip: "0.0.0.0/0"
       loop: "{{ platforms }}"
       loop_control:
         index_var: index
