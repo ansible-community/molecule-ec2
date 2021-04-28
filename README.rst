@@ -110,7 +110,8 @@ Then run
 Documentation
 =============
 
-Details on the parameters for the platforms section are detailed in `<platforms.rst>`__.
+Details on the parameters for the platforms section are detailed in
+`<platforms.rst>`__.
 
 Read the molecule documentation and more at https://molecule.readthedocs.io/.
 
