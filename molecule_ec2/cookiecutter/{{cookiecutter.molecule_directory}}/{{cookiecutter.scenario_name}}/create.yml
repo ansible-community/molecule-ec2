@@ -264,7 +264,7 @@
           "molecule-run-id": "{{ run_config.run_id }}"
         platform_tags: "{{ (item.tags or {}) | combine(platform_generated_tags) }}"
         platform_filter_keys: "{{ platform_generated_tags.keys() | map('regex_replace', '^(.+)$', 'tag:\\1') }}"
-        platform_filters: "{{ dict(platform_filter_keys | zip(platform_generated_tags.values())) }}"
+        platform_filters: "{{ { 'instance-state-name': 'running' } | combine(dict(platform_filter_keys | zip(platform_generated_tags.values()))) }}"
 
         platform_vpc_subnet: "{{ vpc_subnet_info.results[index].subnets[0] }}"
       loop: "{{ platforms }}"
