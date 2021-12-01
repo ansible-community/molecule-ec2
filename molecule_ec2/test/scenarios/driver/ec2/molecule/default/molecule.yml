@@ -3,10 +3,6 @@ dependency:
   name: galaxy
 driver:
   name: ec2
-lint:
-  name: yamllint
-  options:
-    config-file: ../../../resources/.yamllint
 platforms:
   - name: instance
     image: ami-a5b196c0
@@ -14,9 +10,6 @@ platforms:
     vpc_subnet_id: subnet-6456fd1f
 provisioner:
   name: ansible
-  config_options:
-    defaults:
-      callback_whitelist: profile_roles,profile_tasks,timer
   playbooks:
     create: ../../../../../resources/playbooks/ec2/create.yml
     destroy: ../../../../../resources/playbooks/ec2/destroy.yml
@@ -28,5 +21,3 @@ scenario:
   name: default
 verifier:
   name: testinfra
-  lint:
-    name: flake8
