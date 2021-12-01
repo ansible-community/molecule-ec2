@@ -1,0 +1,2 @@
+exclude_paths:
+  - molecule_ec2/cookiecutter/{{cookiecutter.molecule_directory}}
