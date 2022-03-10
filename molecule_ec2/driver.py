@@ -125,6 +125,22 @@ class EC2(Driver):
               ansible_winrm_server_cert_validation: ignore
 
     .. code-block:: bash
+    
+    Windows EC2 instances with ssm session:
+    
+    .. code-block:: yaml
+
+        driver:
+          name: ec2
+        platforms:
+          - name: instance
+            image: ami-06a0d33fc8d328de0
+            instance_type: t3a.medium
+            vpc_subnet_id: subnet-1cb17175
+            connection_options:
+              ansible_connection: aws_ec2
+
+    .. code-block:: bash
 
         $ pip install 'molecule[ec2]'
 
@@ -193,6 +209,15 @@ class EC2(Driver):
                     ansible_connection_options["ansible_host"],
                 )
             )
+        
+        elif ansible_connection_options.get("ansible_connection") == "aws_ssm":
+            return (
+                "aws ssm start-session "
+                '--target "%s" '
+                % (
+                    ansible_connection_options["ansible_host"]
+                )
+            )
 
         else:  # normal ssh connection
             connection_options = " ".join(self.ssh_connection_options)
@@ -246,6 +271,8 @@ class EC2(Driver):
                 conn_opts["ansible_password"] = self._get_windows_instance_pass(
                     d["instance_ids"][0], d["identity_file"]
                 )
+            elif conn_opts.get("ansible_connection") == "aws_ssm":
+                conn_opts["ansible_host"] = d["instance_ids"][0]
             return conn_opts
         except StopIteration:
             return {}
