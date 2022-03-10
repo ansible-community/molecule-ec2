@@ -25,6 +25,7 @@
     default_instance_type: t3a.medium
     default_key_inject_method: cloud-init # valid values: [cloud-init, ec2]
     default_key_name: "molecule-{{ run_config.run_id }}"
+    default_ec2_role_name: "molecule-{{ run_config.run_id }}"
     default_private_key_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/id_rsa"
     default_public_key_path: "{{ default_private_key_path }}.pub"
     default_ssh_user: ubuntu
@@ -55,6 +56,7 @@
       instance_type: "{{ default_instance_type }}"
       key_inject_method: "{{ default_key_inject_method }}"
       key_name: "{{ default_key_name }}"
+      instance_profile: "{{ default_ec2_role_name }}"
       private_key_path: "{{ default_private_key_path }}"
       public_key_path: "{{ default_public_key_path }}"
       security_group_name: "{{ default_security_group_name }}"
@@ -92,6 +94,7 @@
           - platform.assign_public_ip is boolean
           - platform.aws_profile is string
           - platform.boot_wait_seconds is integer and platform.boot_wait_seconds >= 0
+          - platform.user_data is string
           - platform.cloud_config is mapping
           - platform.image is string
           - platform.image_name is string
@@ -101,6 +104,7 @@
           - platform.key_name is string and platform.key_name | length > 0
           - platform.private_key_path is string and platform.private_key_path | length > 0
           - platform.public_key_path is string and platform.public_key_path | length > 0
+          - platform.instance_profile is string
           - platform.region is string
           - platform.security_group_name is string and platform.security_group_name | length > 0
           - platform.security_group_description is string and platform.security_group_description | length > 0
@@ -173,14 +177,51 @@
         region: "{{ item.region | default(omit) }}"
         name: "{{ item.key_name }}"
         key_material: "{{ local_keypair.public_key }}"
+        tags: "{{ platform_tags }}"
       vars:
         local_keypair: "{{ local_keypairs.results[index] }}"
+        platform_generated_tags:
+          instance: "{{ item.name }}"
+          "molecule-run-id": "{{ run_config.run_id }}"
+        platform_tags: "{{ (item.tags or {}) | combine(platform_generated_tags) }}"
       loop: "{{ platforms }}"
       loop_control:
         index_var: index
         label: "{{ item.name }}"
       when: item.key_inject_method == "ec2"
       register: ec2_keys
+    
+    - name: Create ephemeral EC2 role
+      iam_role:
+        name: "{{ item.instance_profile }}"
+        assume_role_policy_document: |-
+          {
+              "Version": "2012-10-17",
+              "Statement": [
+                  {
+                      "Sid": "",
+                      "Effect": "Allow",
+                      "Principal": {
+                          "Service": "ec2.amazonaws.com"
+                      },
+                      "Action": "sts:AssumeRole"
+                  }
+              ]
+          }
+        managed_policies:
+          - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        tags: "{{ platform_tags }}"
+      vars:
+        platform_generated_tags:
+          instance: "{{ item.name }}"
+          "molecule-run-id": "{{ run_config.run_id }}"
+        platform_tags: "{{ (item.tags or {}) | combine(platform_generated_tags) }}"
+      loop: "{{ platforms }}"
+      loop_control:
+        index_var: index
+        label: "{{ item.name }}"
+      when: item.instance_profile
+      register: ec2_roles
 
     - name: Create ephemeral security groups (if needed)
       ec2_group:
@@ -191,8 +232,13 @@
         description: "{{ item.security_group_description }}"
         rules: "{{ item.security_group_rules }}"
         rules_egress: "{{ item.security_group_rules_egress }}"
+        tags: "{{ platform_tags }}"
       vars:
         vpc_subnet: "{{ subnet_info.results[index].subnets[0] }}"
+        platform_generated_tags:
+          instance: "{{ item.name }}"
+          "molecule-run-id": "{{ run_config.run_id }}"
+        platform_tags: "{{ (item.tags or {}) | combine(platform_generated_tags) }}"
       loop: "{{ platforms }}"
       loop_control:
         index_var: index
@@ -214,6 +260,7 @@
         key_name: "{{ (item.key_inject_method == 'ec2') | ternary(item.key_name, omit) }}"
         tags: "{{ platform_tags }}"
         user_data: "{{ platform_user_data }}"
+        instance_role: "{{ ec2_roles.results[index].iam_role.role_name }}"
         wait: true
       vars:
         platform_security_groups: "{{ item.security_groups or [item.security_group_name] }}"
@@ -230,8 +277,12 @@
           {{ (item.key_inject_method == 'cloud-init')
                | ternary((item.cloud_config | combine(platform_generated_cloud_config)), item.cloud_config) }}
         platform_user_data: |-
+          {% if not item.user_data %}
           #cloud-config
           {{ platform_cloud_config | to_yaml }}
+          {% else %}
+          {{ item.user_data }}
+          {% endif %}
 
         platform_generated_tags:
           instance: "{{ item.name }}"
