@@ -20,6 +20,7 @@
 
 from base64 import b64decode
 import os
+import re
 import sys
 
 try:
@@ -210,7 +211,7 @@ class EC2(Driver):
                 )
             )
         
-        elif ansible_connection_options.get("ansible_connection") == "aws_ssm":
+        elif re.match("^(community.aws.)?aws_ssm$", ansible_connection_options.get("ansible_connection")):
             return (
                 "aws ssm start-session "
                 '--target "%s" '
@@ -271,7 +272,7 @@ class EC2(Driver):
                 conn_opts["ansible_password"] = self._get_windows_instance_pass(
                     d["instance_ids"][0], d["identity_file"]
                 )
-            elif conn_opts.get("ansible_connection") == "aws_ssm":
+            elif re.match("^(community.aws.)?aws_ssm$", conn_opts.get("ansible_connection")):
                 conn_opts["ansible_host"] = d["instance_ids"][0]
             return conn_opts
         except StopIteration:
