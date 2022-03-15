@@ -132,6 +132,8 @@
 
     - name: Destroy ephemeral EC2 role
       iam_role:
+        profile: "{{ item.aws_profile | default(omit) }}"
+        region: "{{ item.region | default(omit) }}"
         name: "{{ item.instance_profile }}"
         state: absent
       loop: "{{ platforms }}"
