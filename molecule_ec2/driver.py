@@ -19,9 +19,15 @@
 #  DEALINGS IN THE SOFTWARE.
 
 from base64 import b64decode
+from contextlib import closing
+import json
 import os
 import re
+import socket
+import subprocess
 import sys
+import time
+import threading
 
 try:
     from cryptography.hazmat.backends import default_backend
@@ -171,6 +177,8 @@ class EC2(Driver):
 
     .. _`EC2`: https://aws.amazon.com/ec2/
     """  # noqa
+    _local_port = None
+    _session_open = None
 
     def __init__(self, config=None):
         super(EC2, self).__init__(config)
@@ -211,7 +219,7 @@ class EC2(Driver):
                 )
             )
         
-        elif re.match("^(community.aws.)?aws_ssm$", ansible_connection_options.get("ansible_connection")):
+        elif self.options["use_ssm_session"] or re.match("^(community.aws.)?aws_ssm$", ansible_connection_options.get("ansible_connection")):
             return (
                 "aws ssm start-session "
                 '--target "%s" '
@@ -266,14 +274,23 @@ class EC2(Driver):
                 },
                 plat_conn_opts,
             )
+            if self.options["use_ssm_session"]:
+                conn_opts["ansible_host"] = d["instance_ids"][0]
+                if conn_opts.get("ansible_connection") == "ssh":
+                    conn_opts.set("ansible_ssh_common_args", '-o ProxyCommand="aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters \'portNumber=%p\'"' + conn_opts.get("ansible_ssh_common_args") )
+                else:
+                    conn_opts["ansible_port"] = self._ssm_port_forward(d["instance_ids"][0], conn_opts.get("ansible_port"))
+                    conn_opts["ansible_host"] = "localhost"
+
             if conn_opts.get("ansible_connection") == "winrm" and (
                 not conn_opts.get("ansible_password")
             ):
                 conn_opts["ansible_password"] = self._get_windows_instance_pass(
                     d["instance_ids"][0], d["identity_file"]
                 )
-            elif re.match("^(community.aws.)?aws_ssm$", conn_opts.get("ansible_connection")):
+            elif conn_opts.get("ansible_connection") and re.match("^(community.aws.)?aws_ssm$", conn_opts.get("ansible_connection")):
                 conn_opts["ansible_host"] = d["instance_ids"][0]
+
             return conn_opts
         except StopIteration:
             return {}
@@ -281,6 +298,56 @@ class EC2(Driver):
             # Instance has yet to be provisioned , therefore the
             # instance_config is not on disk.
             return {}
+
+    def _ssm_port_forward(self, instance_id, remote_port):
+        if not self._local_port:
+            self._local_port = 9999
+            with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
+                s.bind(('', 0))
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                self._local_port = s.getsockname()[1]
+
+        
+        if not self._session_open:
+            session = boto3.session.Session()
+
+            self._session_open = True
+            ssm_session = threading.Thread(target=self._ssm_session_thread, args=(session, instance_id, remote_port))
+            ssm_session.start()
+            time.sleep(5)
+
+        return self._local_port
+
+    def _ssm_session_thread(self, boto_session, instance_id, remote_port):
+        while True:
+            client = boto_session.client('ssm')
+            ssm_response = client.start_session(
+                Target=instance_id,
+                DocumentName="AWS-StartPortForwardingSession",
+                Reason="Ansible molecule test",
+                Parameters={
+                    'portNumber': [
+                        str(remote_port),
+                    ],
+                    'localPortNumber': [
+                        str(self._local_port)
+                    ]
+                }
+            )
+            
+            # See : https://github.com/aws/session-manager-plugin/blob/mainline/src/sessionmanagerplugin/session/session.go
+            cmd = [
+              'session-manager-plugin',
+              json.dumps(ssm_response),
+              boto_session.region_name,
+              'StartSession',
+              boto_session.profile_name,
+              json.dumps(dict(Target=instance_id)),
+              'https://ssm.'+ boto_session.region_name +'.amazonaws.com'
+            ]
+            self._session_open = True
+            subprocess.run(cmd)
+            self._session_open = False
 
     def _get_instance_config(self, instance_name):
         instance_config_dict = util.safe_load_file(self._config.driver.instance_config)
@@ -312,3 +379,4 @@ class EC2(Driver):
         command in order to figure out where to load the templates from.
         """
         return os.path.join(os.path.dirname(__file__), "cookiecutter")
+
