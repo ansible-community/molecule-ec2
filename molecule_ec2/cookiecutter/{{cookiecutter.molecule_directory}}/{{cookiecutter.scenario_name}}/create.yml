@@ -26,7 +26,7 @@
     default_key_name: "molecule-{{ run_config.run_id }}"
     default_private_key_path: "{{ lookup('env', 'MOLECULE_EPHEMERAL_DIRECTORY') }}/id_rsa"
     default_public_key_path: "{{ default_private_key_path }}.pub"
-    default_ssh_user: ubuntu
+    default_ssh_user: ansible
     default_ssh_port: 22
     default_user_data: ''
 
