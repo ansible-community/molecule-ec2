@@ -76,12 +76,12 @@ This is a molecule.yml example file
       name: ec2
    platforms:
      - name: instance
-       image_owner: 099720109477
+       image_owner: "099720109477"
        image_name: ubuntu/images/hvm-ssd/ubuntu-bionic-18.04-amd64-server-*
        instance_type: t2.micro
        vpc_subnet_id: <your-aws-vpc-subnet-id>
        tags:
-         - Name: molecule_instance
+         Name: molecule_instance
    provisioner:
      name: ansible
    verifier:
