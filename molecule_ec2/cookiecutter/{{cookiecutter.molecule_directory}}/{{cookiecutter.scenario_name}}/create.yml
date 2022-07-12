@@ -138,8 +138,9 @@
     - name: Look up EC2 AMI(s) by owner and name (if image not set)
       ec2_ami_info:
         owners: "{{ item.image_owner }}"
-        filters:
-          name: "{{ item.image_name }}"
+        filters: "{{ item.image_filters | default({}) | combine(image_name_map) }}"
+      vars:
+        image_name_map: "{% if item.image_name is defined and item.image_name | length > 0 %}{{ { 'name': item.image_name } }}{% else %}{}{% endif %}"
       loop: "{{ platforms }}"
       loop_control:
         label: "{{ item.name }}"
