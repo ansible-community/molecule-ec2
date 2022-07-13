@@ -269,6 +269,10 @@ class EC2(Driver):
             LOG.error("cryptography package required when using Windows instances")
             sys.exit(1)
         ec2_client = boto3.client("ec2")
+        # Wait for the password data to actually be available instead of trying right
+        # away and hoping for a miracle.
+        waiter = ec2_client.get_waiter('password_data_available')
+        waiter.wait(InstanceId=instance_id)
         data_response = ec2_client.get_password_data(InstanceId=instance_id)
         decoded = b64decode(data_response["PasswordData"])
         with open(key_file, "rb") as f:
